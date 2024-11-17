@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal Sensor Data</title>
+</head>
+<body>
+    <h1>Thermal Sensor Data</h1>
+    <button id="connect">Connect to Sensor</button>
+    <pre id="data"></pre>
+
+    <script>
+        let sensorCharacteristic;
+
+        document.getElementById("connect").addEventListener("click", async () => {
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
+                });
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('4fafc201-1fb5-459e-8fcc-c5c9c331914b');
+                sensorCharacteristic = await service.getCharacteristic('beb5483e-36e1-4688-b7f5-ea07361b26a8');
+
+                sensorCharacteristic.startNotifications();
+                sensorCharacteristic.addEventListener('characteristicvaluechanged', handleData);
+
+                console.log("Connected to sensor!");
+            } catch (error) {
+                console.error("Error: " + error);
+            }
+        });
+
+        function handleData(event) {
+            const value = new TextDecoder().decode(event.target.value);
+            document.getElementById("data").textContent = value;
+        }
+    </script>
+</body>
+</html>
